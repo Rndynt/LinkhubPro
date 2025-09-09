@@ -1,0 +1,204 @@
+FINAL PROMPT — Copy & paste EXACTLY into your Replit agent (no edits)
+
+TITLE: Build "Linkhub Pro" — Complete Link-in-Bio Product (shadcn UI, Node TS backend DDD, React TS frontend, Drizzle + Neon serverless, Netlify Functions)
+
+SUMMARY (one-line)
+Implement a production-ready Link-in-Bio product "Linkhub Pro" with all features, UI, API, DB, payments and admin/RBAC exactly as specified below, using shadcn UI + React TypeScript frontend, Node TypeScript backend in DDD pattern, Drizzle ORM + Neon (serverless Postgres), and Netlify serverless functions. Everything must be accessible and testable; run verification scripts and return logs & screenshots.
+
+REPO STRUCTURE (MUST CREATE)
+- domains/{users,pages,billing,analytics,admin}/{domain,application,infrastructure,presentation}
+- packages/db (drizzle schema, migrations, seed, connection)
+- apps/web (Next.js App Router, React + TypeScript, shadcn UI)
+- functions/api (Netlify serverless function handlers in TypeScript)
+- scripts/ (verify-*.ts)
+- docs/, netlify.toml, package.json, .env.example
+
+STACK (MUST USE)
+- Frontend: Next.js (App Router) + React + TypeScript + TailwindCSS + shadcn/ui + @dnd-kit for DnD
+- Backend: Node.js + TypeScript (serverless functions for API) with Domain-Driven Design (DDD)
+- DB: Neon (serverless Postgres) + drizzle-orm + drizzle-kit migrations
+- Auth: Credentials (email+password hashed with bcrypt) + OAuth Google
+- Payments: Midtrans (Snap + webhook)
+- Storage: S3-compatible optional
+- Testing: Vitest + Playwright (or Puppeteer)
+- Lint/Format: ESLint + Prettier
+
+MANDATORY FEATURE LIST (ALL MUST BE IMPLEMENTED)
+1. Auth & Users
+   - Credential registration: POST /api/auth/register { email, username, name, password } -> create tenant user with plan 'free', create default page (see SEED rule), return JWT.
+   - Login: POST /api/auth/login { email, password } -> JWT
+   - OAuth Google: implement callback and user creation/linking.
+   - GET /api/auth/me and PUT /api/auth/me.
+   - RBAC: roles 'admin' and 'tenant'. Only admin may access /api/admin/*.
+
+2. Business rules
+   - No trials.
+   - Free users: automatically get exactly 1 page prepopulated with exactly 3 blocks:
+     - links_block (3 links), social_block (2 social links), contact_block (phone/WA).
+   - Free cannot create >1 page. Attempt must return HTTP 403 and JSON: { "error":"upgrade_required" }.
+   - Pro plan: Rp 35.000 / month (Rp 420.000 / year) — unlocks unlimited pages and all PRO blocks.
+   - Plan enforcement in application services (DDD) and validated in API endpoints and UI: creating pages, blocks, and using PRO-features must be blocked for free users.
+
+3. Block support (MUST support and render)
+   - title_subtitle, link, button, card, image, dynamic_feed (youtube/twitter/rss) [PRO], countdown, product_card [PRO], contact_form, newsletter_signup, embed, gallery, map, messenger_button (whatsapp/telegram/messenger), shortlink_button, video, count_stats, schedule_button, password_protect (meta), links_block (composite), social_block (composite), contact_block (composite).
+   - PRO-only blocks must be enforced: product_card, dynamic_feed, paywall, A/B testing, custom domain.
+
+4. DB Schema (drizzle migrations)
+   - Required tables: users, packages, subscriptions, pages, blocks, shortlinks, analytics_events, domains, payments, admin_audit.
+   - Provide `packages/db/schema.ts` and drizzle migration files.
+
+5. Seeder (packages/db/seed.ts & packages/db/seeds/starter.json)
+   - Seeder must be idempotent and run against Neon (process.env.DATABASE_URL).
+   - Insert:
+     - Admin: admin@linkhub.app role='admin'
+     - Tenant A: creator@example.com role='tenant' plan='free' + 1 page with exactly the 3 blocks above.
+     - Tenant B: shop@example.com role='tenant' plan='pro' + 1 sample page + active subscription row.
+     - packages: free & pro (pro price: 35000/month; yearly 420000).
+     - sample shortlink 'sp1' and sample analytics events.
+   - Save starter JSON exactly (see SAMPLE STARTER JSON at bottom).
+
+6. API Endpoints (functions/api — DDD presentation adapters)
+   - Auth: POST /api/auth/register, POST /api/auth/login, OAuth endpoints, GET /api/auth/me.
+   - Pages: GET/POST /api/pages, GET/PUT/DELETE /api/pages/:id
+   - Blocks: POST/GET/PUT/DELETE /api/pages/:pageId/blocks (validate plan gating)
+   - Shortlink: GET /s/:code -> create analytics_event (click), increment clicks atomically, 302 redirect
+   - Events: POST /api/events -> store view/click/purchase
+   - Payments: POST /api/payments/create-checkout -> Midtrans snap token; POST /api/webhook/midtrans -> verify signature, update payments & subscriptions, set user.plan='pro' when appropriate
+   - Domains: POST /api/domains, POST /api/domains/verify (DNS instructions returned)
+   - Admin: GET/PUT /api/admin/users, POST/PUT /api/admin/packages, GET /api/admin/subscriptions, POST /api/admin/impersonate/:userId (optional). All admin ops log to admin_audit.
+
+7. Frontend (apps/web) — ALL pages must be implemented and accessible
+   - Global layout: persistent Header + Sidebar on dashboard and admin routes using shadcn UI components.
+   - Landing `/`: interactive hero with preview, features, pricing cards (monthly 35.000, yearly 420.000), CTA (Login/Register).
+   - Auth pages: `/auth/login`, `/auth/register` (credentials + Google OAuth).
+   - Dashboard `/dashboard`: summary metrics, quick actions, must show sidebar and header.
+   - Pages list `/dashboard/pages`: shows pages; new page button must enforce free-user limit and show upgrade CTA.
+   - Editor `/dashboard/pages/[id]/editor`: drag-and-drop blocks, edit block config in side panel, live mobile preview, publish toggle.
+   - Billing `/dashboard/billing`: show current plan, upgrade flow (Midtrans), show invoices/payments.
+   - Domains `/dashboard/domains`: add domain wizard + verification instructions.
+   - Analytics `/dashboard/analytics`: basic charts (views, clicks) per page (7d/30d).
+   - Public page `/p/[slug]`: SSR render with OG tags, render all blocks, include pixel that calls POST /api/events on view.
+   - Admin UI `/dashboard/admin/*`: manage users, packages, subscriptions. Admin menu visible only to admins.
+
+8. UI tech & components (MUST use shadcn UI)
+   - Use shadcn UI components for form controls, buttons, modals, cards.
+   - Implement `apps/web/components/Header.tsx`, `apps/web/components/Sidebar.tsx`, and `apps/web/app/layout.tsx` referencing shadcn styles and used across dashboard/admin pages. Sidebar must include clickable links: Dashboard, Pages, Analytics, Billing, Domains, Admin (visible only to admins).
+
+9. Neon DB connection helper (MUST)
+   - `packages/db/connection.ts` with global Pool reuse for serverless:
+     ```
+     import { Pool } from "pg";
+     declare global { var __neonPool: Pool | undefined; }
+     const pool = global.__neonPool ?? new Pool({ connectionString: process.env.DATABASE_URL, ssl:{ rejectUnauthorized:false }});
+     if (!global.__neonPool) global.__neonPool = pool;
+     export { pool };
+     ```
+
+10. Netlify & Deploy
+    - Include `netlify.toml` configured for Next.js build and functions.
+    - Document required Netlify env variables in `.env.example`.
+
+11. Security & best practices
+    - Hash passwords with bcrypt.
+    - JWT with `JWT_SECRET`.
+    - Sanitize embed HTML server-side.
+    - Rate-limit shortlink endpoint.
+    - Validate external URLs against basic blacklist.
+
+12. Tests & Verification (MUST CREATE & RUN)
+    - scripts/verify-structure.ts: check DDD folders and required files exist.
+    - scripts/verify-layout.ts: parse `apps/web/app/layout.tsx` and confirm Header + Sidebar imports and Sidebar contains required links.
+    - scripts/verify-seed.ts: connect to Neon and print JSON `{ users: X, pages: Y, packages: Z }`. Must show users>=3, pages>=2, packages>=2.
+    - scripts/verify-free-user-blocks.ts: ensure free user (creator@example.com) has exactly 1 page and that page has exactly 3 blocks with types links_block, social_block, contact_block.
+    - scripts/api-smoke-tests.ts: run register/login flows, attempt free-user second page creation -> expect 403 upgrade_required, pro user create PRO block -> expect 201, shortlink redirect test verifying 302 and analytics row.
+    - UI test (Playwright): check landing pricing text and sidebar navigation in dashboard.
+
+    Add package.json scripts:
+    ```
+    "verify:structure": "ts-node scripts/verify-structure.ts",
+    "verify:layout": "ts-node scripts/verify-layout.ts",
+    "verify:seed": "ts-node scripts/verify-seed.ts",
+    "verify:free": "ts-node scripts/verify-free-user-blocks.ts",
+    "smoke": "ts-node scripts/api-smoke-tests.ts",
+    "migrate": "drizzle-kit migrate:dev",
+    "seed": "ts-node packages/db/seed.ts",
+    "dev": "netlify dev"
+    ```
+
+ACCEPTANCE RUN (AGENT MUST EXECUTE AND RETURN LOGS & ARTIFACTS)
+Run in order and include full console logs in the final reply:
+1. pnpm install
+2. pnpm run migrate   -> show output
+3. pnpm run seed      -> show output (idempotent)
+4. pnpm run verify:structure  -> must exit 0
+5. pnpm run verify:seed       -> must print JSON with counts and meet thresholds
+6. pnpm run verify:free       -> must exit 0 and confirm free-user page & blocks
+7. pnpm run verify:layout     -> must exit 0
+8. pnpm run smokes (or pnpm run smoke) -> must run api smoke tests (pass)
+9. pnpm run dev (or netlify dev) -> start server; take and attach screenshots:
+   - Landing page (hero + pricing + CTA visible)
+   - Dashboard page (sidebar visible and clickable; show Pages listing)
+
+DELIVERABLES (agent MUST RETURN)
+- Git repo link or Replit workspace link (cloneable)
+- Full logs from migrate, seed, verify scripts, smoke tests
+- Two screenshots (Landing and Dashboard)
+- File paths for these files:
+  - apps/web/app/layout.tsx
+  - apps/web/components/Header.tsx
+  - apps/web/components/Sidebar.tsx
+  - packages/db/schema.ts
+  - packages/db/seed.ts
+  - packages/db/seeds/starter.json
+  - packages/db/connection.ts
+  - netlify.toml
+  - functions/api/auth/*
+  - functions/api/s/[code].ts (or equivalent)
+- docs/README.md, docs/features.md, docs/api.md
+- Test results (pass/fail) for verify scripts and smoke tests
+
+FAIL CONDITIONS (AGENT MUST STOP & REPORT if any)
+- verify:structure fails
+- verify:seed missing required seeded data (free user page/blocks)
+- verify:layout fails
+- smoke tests fail (any critical API contract)
+- dev not starting or screenshots not produced
+
+SAMPLE STARTER JSON (MUST be saved to packages/db/seeds/starter.json exactly as below)
+{
+  "users": [
+    { "id":"00000000-0000-0000-0000-000000000000", "email":"admin@linkhub.app", "username":"admin", "name":"Admin", "role":"admin", "plan":"admin" },
+    { "id":"11111111-1111-1111-1111-111111111111", "email":"creator@example.com", "username":"jessica", "name":"Jessica Creator", "role":"tenant", "plan":"free" },
+    { "id":"22222222-2222-2222-2222-222222222222", "email":"shop@example.com", "username":"kulinaria", "name":"Kulinaria Shop", "role":"tenant", "plan":"pro" }
+  ],
+  "packages": [
+    { "id":"pkg-free", "handle":"free", "name":"Free", "price_cents":0, "currency":"IDR", "billing_interval":"monthly", "features": { "pages": 1 } },
+    { "id":"pkg-pro", "handle":"pro", "name":"Pro", "price_cents":35000, "currency":"IDR", "billing_interval":"monthly", "features": { "pages": "unlimited" } }
+  ],
+  "pages": [
+    { "id":"page-1", "user_id":"11111111-1111-1111-1111-111111111111", "title":"Jessica - Links", "slug":"jessica", "is_published": true }
+  ],
+  "blocks": [
+    { "id":"blk-1", "page_id":"page-1", "type":"links_block", "position":1, "config": { "links": [ { "label":"Blog","url":"https://jessica.blog" }, { "label":"Shop","url":"https://shop.jessica" }, { "label":"Spotify","url":"https://spotify.example" } ] } },
+    { "id":"blk-2", "page_id":"page-1", "type":"social_block", "position":2, "config": { "socials":[ { "provider":"instagram","url":"https://instagram.com/jessica" }, { "provider":"youtube","url":"https://youtube.com/jessica" } ] } },
+    { "id":"blk-3", "page_id":"page-1", "type":"contact_block", "position":3, "config": { "phone":"+628123456789", "whatsapp_prefilled": "Halo, saya mau pesan" } }
+  ],
+  "shortlinks": [
+    { "id":"s1", "code":"sp1", "target_url":"https://open.spotify.com/track/example", "page_id":"page-1", "block_id":"blk-1" }
+  ]
+}
+
+ENVIRONMENT (put in .env or Replit secrets)
+DATABASE_URL=postgres://<user>:<pass>@<neon-host>/<db>?sslmode=require
+JWT_SECRET=replace_me
+MIDTRANS_SERVER_KEY=replace_me
+MIDTRANS_CLIENT_KEY=replace_me
+OAUTH_GOOGLE_CLIENT_ID=replace_me
+OAUTH_GOOGLE_CLIENT_SECRET=replace_me
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+S3_ENDPOINT=...
+S3_BUCKET=...
+S3_ACCESS_KEY=...
+S3_SECRET_KEY=...
+
+END OF PROMPT — AGENT MUST FOLLOW THIS EXACTLY AND RETURN ALL REQUESTED ARTIFACTS.
