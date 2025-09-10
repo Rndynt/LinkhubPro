@@ -86,10 +86,36 @@ export default function AppSidebar() {
   const [location] = useLocation();
 
   const isActive = (path: string) => {
+    // Handle root dashboard case
     if (path === "/dashboard") {
       return location === "/dashboard" || location === "/";
     }
-    return location.startsWith(path);
+
+    // Get all possible navigation paths to check for more specific matches
+    const allPaths = [
+      ...menuItems.map(item => item.url),
+      ...adminItems.map(item => item.url),
+    ];
+
+    // If current location exactly matches the path, it's active
+    if (location === path) {
+      return true;
+    }
+
+    // Check if current location starts with the path
+    if (location.startsWith(path)) {
+      // Make sure there's no more specific path that also matches
+      const moreSpecificPaths = allPaths.filter(p => 
+        p !== path && 
+        p.startsWith(path) && 
+        location.startsWith(p)
+      );
+      
+      // Only return true if no more specific path matches
+      return moreSpecificPaths.length === 0;
+    }
+
+    return false;
   };
 
   return (

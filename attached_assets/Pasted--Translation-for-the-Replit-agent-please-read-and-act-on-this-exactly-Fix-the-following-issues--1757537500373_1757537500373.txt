@@ -1,0 +1,36 @@
+# Translation for the Replit agent — please read and act on this exactly:
+
+Fix the following issues and implement the requested improvements:
+
+1. Landing page — Pricing section: several pricing items look unattractive because borders and the inner backgrounds are messy. Do **not** use plain border lines that look rigid or unappealing. Replace those border outlines with subtle shadows and clean backgrounds so the pricing cards are eye-catching and well-aligned. Remove the thin, harsh border-lines; use elevation (box-shadow), proper padding, and consistent spacing instead.
+
+2. Analytics menu: the **Top Performing Pages / Links** section is not mobile-responsive and overflows its container. Fix the layout so the section is fully responsive (mobile-first) and content does not escape its section.
+
+3. Admin Panel: **User Management**, **Recent Subscriptions**, and **Quick Actions** components are not mobile-responsive and overflow their sections on small screens. Fix layout, wrapping, and spacing so these modules work correctly on mobile and desktop.
+
+4. Endpoint Monitor: the items under **Endpoint Status** overflow and are not responsive. Ensure endpoint items wrap/stack properly, use responsive grid/flex behavior, and remain contained within their section.
+
+5. Sidebar navigation state bug: after selecting **Admin Panel** and then **Endpoint Monitor**, the sidebar marks two items as active at once (both show as checked/active). Fix routing / active-link logic so only the correct single menu item is marked active.
+
+6. Admin menus: if necessary, add and explicitly expose the full set of administration menus. There should be additional manageable admin pages — review available admin features and ensure the sidebar/menu lists every appropriate admin section (and their access control).
+
+7. Pages menu: creating pages currently throws an error. Investigate the root cause of the create-pages error and fix it end-to-end (frontend form validation, API request, backend handler, DB write, and error handling).
+
+8. Remove hardcoded/dummy data: ensure no features depend on hardcoded dummy data. All UI and metrics must use real data from the database — dashboard metrics, analytics, pages, domains, and other data-driven components must reflect real DB values only (no UI-only hardcoded placeholders). Audit the codebase for any hardcoded fixtures and replace with real data flows.
+
+9. Demo pages for landing: create a polished set of demo pages/links/blocks for the landing page “Visit Demo” flow. Requirements:
+
+   * Build attractive demo pages (blocks, link blocks, CTA, grid/list) that showcase the product.
+   * Ensure the demo data is stored in the database (not just front-end).
+   * Add seeders so the demo data is re-created automatically after a database reset/migration.
+   * Wire the landing page “Visit Demo” link to open the demo page with working block/link features and realistic demo content.
+
+Final deliverable requirements:
+
+* Perform a thorough, well-structured fix and deep analysis of root causes for each issue.
+* Provide a concise report of what you changed, why, and where (files/lines or PR/commit references).
+* Ensure all fixes are mobile-first and desktop-responsive, follow the existing design system (Tailwind + shadcn/ui as requested), and eliminate brittle custom CSS that causes global breakage.
+* Make sure typography, colors, spacing, and component states (hover/active/disabled) are restored and consistent across the app.
+* Add/restore seeders for demo content and document how to re-seed the demo data.
+
+Act on this exactly and deliver the fixes, plus the analysis/report of changes made.

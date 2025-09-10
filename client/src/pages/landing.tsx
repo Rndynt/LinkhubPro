@@ -119,14 +119,16 @@ export default function Landing() {
                   <ArrowRightIcon className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <Button 
-                size="lg"
-                variant="outline"
-                className="w-full sm:w-auto border-border text-foreground hover:bg-accent hover:text-accent-foreground px-8 py-4 text-lg transition-all duration-200 hover:scale-105"
-                data-testid="button-view-demo"
-              >
-                View Demo
-              </Button>
+              <Link href="/p/demo-creator">
+                <Button 
+                  size="lg"
+                  variant="outline"
+                  className="w-full sm:w-auto border-border text-foreground hover:bg-accent hover:text-accent-foreground px-8 py-4 text-lg transition-all duration-200 hover:scale-105"
+                  data-testid="button-view-demo"
+                >
+                  View Demo
+                </Button>
+              </Link>
             </div>
             
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 text-sm text-muted-foreground">
@@ -296,7 +298,7 @@ export default function Landing() {
 
           <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
             {/* Free Plan */}
-            <Card className="bg-card border-border transition-all duration-300 hover:shadow-lg" data-testid="pricing-card-free">
+            <Card className="shadow-lg hover:shadow-xl transition-all duration-300 bg-card/50 backdrop-blur border-0" data-testid="pricing-card-free">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl text-card-foreground">Free</CardTitle>
                 <div className="text-4xl font-bold text-card-foreground">
@@ -331,7 +333,7 @@ export default function Landing() {
             </Card>
 
             {/* Pro Plan */}
-            <Card className="border-2 border-primary relative bg-card transition-all duration-300 hover:shadow-xl hover:scale-105" data-testid="pricing-card-pro">
+            <Card className="relative shadow-xl hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-card to-card/80 border-0 ring-2 ring-primary/20 hover:scale-105" data-testid="pricing-card-pro">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
               </div>

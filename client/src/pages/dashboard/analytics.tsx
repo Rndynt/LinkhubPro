@@ -54,37 +54,20 @@ export default function Analytics() {
     retry: false,
   });
 
-  const { data: analytics, isLoading } = useQuery<AnalyticsData>({
+  const { data: analytics, isLoading, error } = useQuery<AnalyticsData>({
     queryKey: ["/api/analytics", selectedPage, timeRange],
     retry: false,
   });
 
-  // Mock data for demonstration
-  const mockAnalytics: AnalyticsData = {
-    totalViews: 1234,
-    totalClicks: 567,
-    conversionRate: 46,
-    topPages: [
-      { id: "1", title: "Main Bio Page", slug: "jessica", views: 856, clicks: 342 },
-      { id: "2", title: "Business Page", slug: "jessica-biz", views: 378, clicks: 225 },
-    ],
-    topLinks: [
-      { label: "Blog", url: "https://jessica.blog", clicks: 156 },
-      { label: "Shop", url: "https://shop.jessica", clicks: 98 },
-      { label: "Instagram", url: "https://instagram.com/jessica", clicks: 76 },
-    ],
-    chartData: [
-      { date: "2024-01-01", views: 45, clicks: 12 },
-      { date: "2024-01-02", views: 52, clicks: 18 },
-      { date: "2024-01-03", views: 48, clicks: 15 },
-      { date: "2024-01-04", views: 61, clicks: 22 },
-      { date: "2024-01-05", views: 55, clicks: 19 },
-      { date: "2024-01-06", views: 67, clicks: 28 },
-      { date: "2024-01-07", views: 73, clicks: 31 },
-    ],
+  // Handle no data scenario
+  const displayAnalytics = analytics || {
+    totalViews: 0,
+    totalClicks: 0,
+    conversionRate: 0,
+    topPages: [],
+    topLinks: [],
+    chartData: [],
   };
-
-  const displayAnalytics = analytics || mockAnalytics;
 
   const getTimeRangeLabel = (range: string) => {
     switch (range) {
@@ -114,6 +97,25 @@ export default function Analytics() {
             </Card>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold">Analytics</h1>
+            <p className="text-muted-foreground">Track your page performance</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <h3 className="text-lg font-semibold mb-2">Unable to load analytics</h3>
+            <p className="text-muted-foreground">Please try refreshing the page or check your connection.</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -212,55 +214,67 @@ export default function Analytics() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-80 bg-muted/30 rounded-lg flex items-center justify-center">
-            <div className="text-center">
-              <BarChartIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <p className="text-lg font-medium mb-2">Chart Visualization</p>
-              <p className="text-sm text-muted-foreground">
-                Interactive chart showing views and clicks over time would appear here
-              </p>
+          {displayAnalytics.chartData.length > 0 ? (
+            <div className="h-80 bg-muted/30 rounded-lg flex items-center justify-center">
+              <div className="text-center">
+                <BarChartIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-lg font-medium mb-2">Chart Data Available</p>
+                <p className="text-sm text-muted-foreground">
+                  {displayAnalytics.chartData.length} days of data from {getTimeRangeLabel(timeRange).toLowerCase()}
+                </p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="h-80 bg-muted/30 rounded-lg flex items-center justify-center">
+              <div className="text-center">
+                <BarChartIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-lg font-medium mb-2">No Data Available</p>
+                <p className="text-sm text-muted-foreground">
+                  No analytics data found for the selected time period. Start sharing your pages to see data here.
+                </p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Top Performance Tables */}
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
         {/* Top Pages */}
         <Card data-testid="card-top-pages">
           <CardHeader>
             <CardTitle>Top Performing Pages</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {displayAnalytics.topPages.map((page, index) => (
                 <div 
                   key={page.id}
-                  className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-muted/30 rounded-lg gap-3 sm:gap-0"
                   data-testid={`top-page-${index}`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <span className="text-primary font-semibold text-sm">{index + 1}</span>
+                  <div className="flex items-center space-x-3 min-w-0 flex-1">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <span className="text-primary font-semibold text-sm sm:text-base">{index + 1}</span>
                     </div>
-                    <div>
-                      <p className="font-medium">{page.title}</p>
-                      <p className="text-sm text-muted-foreground">/{page.slug}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm sm:text-base truncate">{page.title}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">/{page.slug}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center space-x-4 text-sm">
+                  <div className="flex items-center justify-between sm:justify-end sm:flex-col sm:items-end gap-3 sm:gap-1">
+                    <div className="flex items-center space-x-3 sm:space-x-4 text-sm">
                       <div className="flex items-center space-x-1">
-                        <EyeIcon className="w-3 h-3" />
-                        <span>{page.views}</span>
+                        <EyeIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span className="font-medium">{page.views}</span>
                       </div>
                       <div className="flex items-center space-x-1">
-                        <MousePointerClickIcon className="w-3 h-3" />
-                        <span>{page.clicks}</span>
+                        <MousePointerClickIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span className="font-medium">{page.clicks}</span>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" className="mt-1">
-                      <ExternalLinkIcon className="w-3 h-3" />
+                    <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-9 sm:w-9 p-0" data-testid={`button-view-page-${index}`}>
+                      <ExternalLinkIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                     </Button>
                   </div>
                 </div>
@@ -275,29 +289,29 @@ export default function Analytics() {
             <CardTitle>Top Performing Links</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {displayAnalytics.topLinks.map((link, index) => (
                 <div 
                   key={index}
-                  className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-muted/30 rounded-lg gap-3 sm:gap-0"
                   data-testid={`top-link-${index}`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
-                      <span className="text-green-600 font-semibold text-sm">{index + 1}</span>
+                  <div className="flex items-center space-x-3 min-w-0 flex-1">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <span className="text-green-600 font-semibold text-sm sm:text-base">{index + 1}</span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{link.label}</p>
-                      <p className="text-sm text-muted-foreground truncate">{link.url}</p>
+                      <p className="font-medium text-sm sm:text-base truncate">{link.label}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate break-all">{link.url}</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="text-right">
-                      <p className="font-medium">{link.clicks}</p>
+                  <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-2">
+                    <div className="text-left sm:text-right">
+                      <p className="font-medium text-sm sm:text-base">{link.clicks}</p>
                       <p className="text-xs text-muted-foreground">clicks</p>
                     </div>
-                    <Button variant="ghost" size="sm">
-                      <ExternalLinkIcon className="w-3 h-3" />
+                    <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-9 sm:w-9 p-0" data-testid={`button-view-link-${index}`}>
+                      <ExternalLinkIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                     </Button>
                   </div>
                 </div>

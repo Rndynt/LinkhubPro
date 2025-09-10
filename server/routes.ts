@@ -1,10 +1,11 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
+import "./types"; // Import type augmentations
 
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -14,7 +15,7 @@ const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
 const pgStore = connectPg(session);
 
 // Auth middleware
-export const authenticateToken = async (req: any, res: any, next: any) => {
+export const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -36,7 +37,7 @@ export const authenticateToken = async (req: any, res: any, next: any) => {
 };
 
 // Admin middleware
-export const requireAdmin = (req: any, res: any, next: any) => {
+export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
   if (req.user?.role !== 'admin') {
     return res.status(403).json({ message: 'Admin access required' });
   }
@@ -198,6 +199,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get('/api/auth/me', authenticateToken, (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
     res.json({
       id: req.user.id,
       email: req.user.email,
@@ -212,6 +216,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Pages routes
   app.get('/api/pages', authenticateToken, async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
       const pages = await storage.getUserPages(req.user.id);
       res.json(pages);
     } catch (error) {
@@ -222,7 +229,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/pages', authenticateToken, async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+      
       const { title, slug } = req.body;
+
+      // Validation
+      if (!title || !slug) {
+        return res.status(400).json({ message: 'Title and slug are required' });
+      }
 
       // Check plan limits for free users
       if (req.user.plan === 'free') {
@@ -248,6 +264,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/pages/:id', authenticateToken, async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
       const page = await storage.getPageById(req.params.id);
       if (!page || page.userId !== req.user.id) {
         return res.status(404).json({ message: 'Page not found' });
@@ -263,6 +282,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/pages/:id', authenticateToken, async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
       const { title, description, isPublished } = req.body;
       const page = await storage.getPageById(req.params.id);
       
@@ -286,6 +308,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Blocks routes
   app.post('/api/pages/:pageId/blocks', authenticateToken, async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
       const { type, position, config } = req.body;
       const page = await storage.getPageById(req.params.pageId);
       
@@ -389,9 +414,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get analytics data
+  app.get('/api/analytics', authenticateToken, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+      
+      const { selectedPage, timeRange } = req.query;
+      const pageId = selectedPage === 'all' ? undefined : selectedPage as string;
+      
+      const analytics = await storage.getUserAnalytics(
+        req.user.id, 
+        pageId, 
+        timeRange as string
+      );
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error('Get analytics error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Get dashboard stats
+  app.get('/api/analytics/stats', authenticateToken, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+      
+      const stats = await storage.getUserDashboardStats(req.user.id);
+      res.json(stats);
+    } catch (error) {
+      console.error('Get dashboard stats error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   // Admin routes
+  app.get('/api/admin/stats', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+      
+      const stats = await storage.getAdminStats();
+      
+      // Log admin action
+      await storage.createAdminAuditLog({
+        adminId: req.user.id,
+        action: 'view_admin_stats',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      res.json(stats);
+    } catch (error) {
+      console.error('Get admin stats error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
       const { limit = 50, offset = 0 } = req.query;
       const result = await storage.getAllUsers(Number(limit), Number(offset));
       

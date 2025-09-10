@@ -81,10 +81,10 @@ export default function EndpointsMonitor() {
   // Check if user is admin
   if (user?.role !== 'admin') {
     return (
-      <div className="p-6">
-        <Alert>
-          <ShieldIcon className="h-4 w-4" />
-          <AlertDescription>
+      <div className="p-3 sm:p-6">
+        <Alert className="max-w-2xl mx-auto">
+          <ShieldIcon className="h-4 w-4 flex-shrink-0" />
+          <AlertDescription className="text-sm sm:text-base">
             Access denied. This page is only accessible by administrators.
           </AlertDescription>
         </Alert>
@@ -286,22 +286,23 @@ export default function EndpointsMonitor() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <ServerIcon className="w-6 h-6" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <ServerIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             Endpoint Monitor
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             Monitor the health and performance of all API endpoints
           </p>
         </div>
         <Button 
           onClick={checkAllEndpoints} 
           disabled={isChecking}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 w-full sm:w-auto"
+          data-testid="button-refresh-endpoints"
         >
           <RefreshCwIcon className={`w-4 h-4 ${isChecking ? 'animate-spin' : ''}`} />
           {isChecking ? 'Checking...' : 'Check All'}
@@ -309,62 +310,62 @@ export default function EndpointsMonitor() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
-              <GlobeIcon className="w-4 h-4 text-blue-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Total</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
+              <GlobeIcon className="w-4 h-4 text-blue-500 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Total</p>
+                <p className="text-lg sm:text-2xl font-bold">{stats.total}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
-              <CheckCircleIcon className="w-4 h-4 text-green-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Online</p>
-                <p className="text-2xl font-bold text-green-600">{stats.online}</p>
+              <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Online</p>
+                <p className="text-lg sm:text-2xl font-bold text-green-600">{stats.online}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
-              <ClockIcon className="w-4 h-4 text-yellow-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Slow</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.slow}</p>
+              <ClockIcon className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Slow</p>
+                <p className="text-lg sm:text-2xl font-bold text-yellow-600">{stats.slow}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
-              <AlertTriangleIcon className="w-4 h-4 text-red-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Errors</p>
-                <p className="text-2xl font-bold text-red-600">{stats.error}</p>
+              <AlertTriangleIcon className="w-4 h-4 text-red-500 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Errors</p>
+                <p className="text-lg sm:text-2xl font-bold text-red-600">{stats.error}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2">
-              <ClockIcon className="w-4 h-4 text-blue-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Avg Time</p>
-                <p className="text-2xl font-bold">{stats.avgResponseTime}ms</p>
+              <ClockIcon className="w-4 h-4 text-blue-500 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">Avg Time</p>
+                <p className="text-lg sm:text-2xl font-bold">{stats.avgResponseTime}ms</p>
               </div>
             </div>
           </CardContent>
@@ -382,21 +383,24 @@ export default function EndpointsMonitor() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="search">Search Endpoints</Label>
+              <Label htmlFor="search" className="text-sm font-medium">Search Endpoints</Label>
               <Input
                 id="search"
                 placeholder="Filter by endpoint or method..."
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
+                className="mt-1"
+                data-testid="input-search-endpoints"
               />
             </div>
             <div>
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category" className="text-sm font-medium">Category</Label>
               <select
                 id="category"
-                className="w-full p-2 border rounded-md"
+                className="w-full p-3 border rounded-md bg-background text-foreground mt-1 touch-manipulation"
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
+                data-testid="select-category"
               >
                 {categories.map(cat => (
                   <option key={cat} value={cat}>
@@ -415,49 +419,81 @@ export default function EndpointsMonitor() {
           <CardTitle>Endpoints Status</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
+          <div className="space-y-3 sm:space-y-2">
             {filteredEndpoints.map((endpoint, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
+                className="p-3 sm:p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                data-testid={`endpoint-item-${index}`}
               >
-                <div className="flex items-center gap-4 flex-1">
-                  {getStatusIcon(endpoint.status)}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <code className="text-sm bg-muted px-2 py-1 rounded">
-                        {endpoint.method}
-                      </code>
-                      <span className="font-mono text-sm">{endpoint.endpoint}</span>
-                      {endpoint.requiresAuth && (
-                        <Badge variant="outline" className="text-xs">
-                          AUTH
-                        </Badge>
+                {/* Mobile: Vertical layout, Desktop: Horizontal layout */}
+                <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+                  {/* Status icon and main info */}
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="flex-shrink-0 mt-1 sm:mt-0">
+                      {getStatusIcon(endpoint.status)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {/* Method and endpoint */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <code className="text-sm bg-muted px-2 py-1 rounded font-semibold flex-shrink-0">
+                            {endpoint.method}
+                          </code>
+                          <span className="font-mono text-sm break-all sm:break-normal">{endpoint.endpoint}</span>
+                        </div>
+                        {endpoint.requiresAuth && (
+                          <Badge variant="outline" className="text-xs flex-shrink-0 w-fit">
+                            AUTH
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {/* Status information - Responsive grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-xs text-muted-foreground">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-foreground">Category</span>
+                          <span className="capitalize">{endpoint.category}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-foreground">Response</span>
+                          <span>{endpoint.responseTime}ms</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-foreground">Status</span>
+                          <span>{endpoint.statusCode}</span>
+                        </div>
+                        <div className="flex flex-col col-span-2 sm:col-span-1">
+                          <span className="font-medium text-foreground">Last Checked</span>
+                          <span>{new Date(endpoint.lastChecked).toLocaleTimeString()}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Error message */}
+                      {endpoint.errorMessage && (
+                        <div className="mt-2 p-2 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30 rounded text-xs text-red-700 dark:text-red-400">
+                          <span className="font-medium">Error:</span> {endpoint.errorMessage}
+                        </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                      <span>Category: {endpoint.category}</span>
-                      <span>Response: {endpoint.responseTime}ms</span>
-                      <span>Status: {endpoint.statusCode}</span>
-                      <span>Last checked: {new Date(endpoint.lastChecked).toLocaleTimeString()}</span>
-                    </div>
-                    {endpoint.errorMessage && (
-                      <div className="mt-1 text-xs text-red-600">
-                        Error: {endpoint.errorMessage}
-                      </div>
-                    )}
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusBadge(endpoint.status)}
+                  
+                  {/* Status badge - positioned for mobile/desktop */}
+                  <div className="flex justify-start sm:justify-end sm:flex-shrink-0">
+                    <div className="touch-manipulation">
+                      {getStatusBadge(endpoint.status)}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
 
           {filteredEndpoints.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              No endpoints match your filter criteria.
+            <div className="text-center py-8 px-4 text-muted-foreground">
+              <div className="text-sm sm:text-base">
+                No endpoints match your filter criteria.
+              </div>
             </div>
           )}
         </CardContent>

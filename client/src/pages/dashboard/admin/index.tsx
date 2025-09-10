@@ -55,13 +55,13 @@ export default function AdminPanel() {
   const [searchTerm, setSearchTerm] = useState("");
   const [userFilter, setUserFilter] = useState("all");
 
-  const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
+  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
     enabled: user?.role === 'admin',
     retry: false,
   });
 
-  const { data: usersData, isLoading: usersLoading } = useQuery<{
+  const { data: usersData, isLoading: usersLoading, error: usersError } = useQuery<{
     users: AdminUser[];
     total: number;
   }>({
@@ -70,7 +70,7 @@ export default function AdminPanel() {
     retry: false,
   });
 
-  const { data: subscriptionsData, isLoading: subscriptionsLoading } = useQuery<{
+  const { data: subscriptionsData, isLoading: subscriptionsLoading, error: subscriptionsError } = useQuery<{
     subscriptions: AdminSubscription[];
     total: number;
   }>({
@@ -79,48 +79,17 @@ export default function AdminPanel() {
     retry: false,
   });
 
-  // Mock data for demonstration
-  const mockStats: AdminStats = {
-    totalUsers: 2847,
-    proUsers: 489,
-    totalPages: 3692,
-    monthlyRevenue: 17115000,
-    usersChange: 23,
-    revenueChange: 18,
+  // Handle no data scenario
+  const displayStats = stats || {
+    totalUsers: 0,
+    proUsers: 0,
+    totalPages: 0,
+    monthlyRevenue: 0,
+    usersChange: 0,
+    revenueChange: 0,
   };
 
-  const mockUsers: AdminUser[] = [
-    {
-      id: "1",
-      name: "Maria Santos",
-      email: "maria@example.com",
-      username: "maria",
-      plan: "pro",
-      role: "tenant",
-      createdAt: "2024-01-15T10:00:00Z",
-    },
-    {
-      id: "2",
-      name: "David Wilson",
-      email: "david@example.com",
-      username: "david",
-      plan: "free",
-      role: "tenant",
-      createdAt: "2024-01-14T15:30:00Z",
-    },
-    {
-      id: "3",
-      name: "Sarah Johnson",
-      email: "sarah@example.com",
-      username: "sarah",
-      plan: "pro",
-      role: "tenant",
-      createdAt: "2024-01-13T09:20:00Z",
-    },
-  ];
-
-  const displayStats = stats || mockStats;
-  const displayUsers = usersData?.users || mockUsers;
+  const displayUsers = usersData?.users || [];
 
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -141,7 +110,7 @@ export default function AdminPanel() {
   // Redirect if not admin
   if (user?.role !== 'admin') {
     return (
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <Card>
           <CardContent className="p-6 text-center">
             <h3 className="text-lg font-semibold mb-2">Access Denied</h3>
@@ -154,8 +123,8 @@ export default function AdminPanel() {
 
   if (statsLoading || usersLoading) {
     return (
-      <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="p-4 sm:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 lg:mb-8">
           {[...Array(4)].map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardContent className="p-6">
@@ -169,8 +138,21 @@ export default function AdminPanel() {
     );
   }
 
+  if (statsError || usersError) {
+    return (
+      <div className="p-4 sm:p-6">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <h3 className="text-lg font-semibold mb-2">Unable to load admin data</h3>
+            <p className="text-muted-foreground">Please check your admin permissions and try refreshing the page.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 space-y-8" data-testid="admin-panel">
+    <div className="p-4 sm:p-6 space-y-6 lg:space-y-8 max-w-full overflow-hidden" data-testid="admin-panel">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-destructive" data-testid="text-admin-title">
@@ -180,7 +162,7 @@ export default function AdminPanel() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <Card data-testid="admin-stats-users">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -250,26 +232,26 @@ export default function AdminPanel() {
       </div>
 
       {/* Main Content */}
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Users Management */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 min-w-0">
           <Card data-testid="card-users-management">
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="space-y-4">
                 <CardTitle>Users Management</CardTitle>
-                <div className="flex items-center space-x-2">
-                  <div className="relative">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-2">
+                  <div className="relative flex-1 sm:flex-none">
                     <SearchIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Search users..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-8 w-64"
+                      className="pl-8 w-full sm:w-64"
                       data-testid="input-search-users"
                     />
                   </div>
                   <Select value={userFilter} onValueChange={setUserFilter}>
-                    <SelectTrigger className="w-32" data-testid="select-user-filter">
+                    <SelectTrigger className="w-full sm:w-32" data-testid="select-user-filter">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -287,25 +269,25 @@ export default function AdminPanel() {
                 {displayUsers.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center justify-between p-4 bg-muted/30 rounded-lg"
+                    className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between p-4 bg-muted/30 rounded-lg"
                     data-testid={`admin-user-${user.id}`}
                   >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                    <div className="flex items-center space-x-3 min-w-0 flex-1">
+                      <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
                         <span className="text-primary-foreground font-semibold text-sm">
                           {user.name.charAt(0)}
                         </span>
                       </div>
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <h4 className="font-medium" data-testid={`text-user-name-${user.id}`}>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                          <h4 className="font-medium truncate" data-testid={`text-user-name-${user.id}`}>
                             {user.name}
                           </h4>
                           {user.role === 'admin' && (
-                            <Badge variant="destructive" className="text-xs">Admin</Badge>
+                            <Badge variant="destructive" className="text-xs w-fit">Admin</Badge>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground" data-testid={`text-user-email-${user.id}`}>
+                        <p className="text-sm text-muted-foreground truncate" data-testid={`text-user-email-${user.id}`}>
                           {user.email}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -313,15 +295,16 @@ export default function AdminPanel() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-between sm:justify-end space-x-2 flex-shrink-0">
                       <Badge
                         variant={user.plan === 'pro' ? 'default' : 'secondary'}
+                        className="text-xs"
                         data-testid={`badge-user-plan-${user.id}`}
                       >
                         {user.plan === 'pro' && <CrownIcon className="w-3 h-3 mr-1" />}
                         {user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}
                       </Badge>
-                      <Button variant="ghost" size="sm" data-testid={`button-user-actions-${user.id}`}>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 touch-manipulation" data-testid={`button-user-actions-${user.id}`}>
                         <MoreHorizontalIcon className="w-4 h-4" />
                       </Button>
                     </div>
@@ -333,11 +316,11 @@ export default function AdminPanel() {
         </div>
 
         {/* System Health & Quick Actions */}
-        <div className="space-y-6">
+        <div className="space-y-4 lg:space-y-6">
           {/* System Health */}
           <Card data-testid="card-system-health">
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
+              <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <span>System Health</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -379,14 +362,14 @@ export default function AdminPanel() {
                   {subscriptionsData.subscriptions.slice(0, 3).map((subscription) => (
                     <div
                       key={subscription.id}
-                      className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 bg-muted/30 rounded-lg"
                       data-testid={`admin-subscription-${subscription.id}`}
                     >
-                      <div>
-                        <p className="font-medium text-sm">{subscription.user.name}</p>
-                        <p className="text-xs text-muted-foreground">{subscription.package.name}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm truncate">{subscription.user.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{subscription.package.name}</p>
                       </div>
-                      <div className="text-right">
+                      <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2">
                         <p className="text-sm font-medium">
                           {formatCurrency(subscription.package.priceCents)}
                         </p>
@@ -412,15 +395,15 @@ export default function AdminPanel() {
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start" data-testid="button-export-users">
+              <Button variant="outline" className="w-full justify-start h-10 touch-manipulation" data-testid="button-export-users">
                 <UsersIcon className="w-4 h-4 mr-2" />
                 Export User Data
               </Button>
-              <Button variant="outline" className="w-full justify-start" data-testid="button-system-backup">
+              <Button variant="outline" className="w-full justify-start h-10 touch-manipulation" data-testid="button-system-backup">
                 <FileTextIcon className="w-4 h-4 mr-2" />
                 Create System Backup
               </Button>
-              <Button variant="outline" className="w-full justify-start" data-testid="button-audit-logs">
+              <Button variant="outline" className="w-full justify-start h-10 touch-manipulation" data-testid="button-audit-logs">
                 <TrendingUpIcon className="w-4 h-4 mr-2" />
                 View Audit Logs
               </Button>

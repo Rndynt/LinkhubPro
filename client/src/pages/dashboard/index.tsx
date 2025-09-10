@@ -34,12 +34,12 @@ interface RecentPage {
 export default function Dashboard() {
   const { user } = useAuth();
 
-  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
+  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<DashboardStats>({
     queryKey: ["/api/analytics/stats"],
     retry: false,
   });
 
-  const { data: pages, isLoading: pagesLoading } = useQuery<RecentPage[]>({
+  const { data: pages, isLoading: pagesLoading, error: pagesError } = useQuery<RecentPage[]>({
     queryKey: ["/api/pages"],
     retry: false,
   });
@@ -61,16 +61,28 @@ export default function Dashboard() {
     );
   }
 
-  const mockStats: DashboardStats = {
-    totalViews: 1234,
-    totalClicks: 567,
-    activePages: pages?.length || 0,
-    conversionRate: 46,
-    viewsChange: 12,
-    clicksChange: 8,
-  };
+  if (statsError || pagesError) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <h3 className="text-lg font-semibold mb-2">Unable to load dashboard data</h3>
+            <p className="text-muted-foreground">Please try refreshing the page or check your connection.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  const displayStats = stats || mockStats;
+  // Handle no data scenario
+  const displayStats = stats || {
+    totalViews: 0,
+    totalClicks: 0,
+    activePages: pages?.length || 0,
+    conversionRate: 0,
+    viewsChange: 0,
+    clicksChange: 0,
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8" data-testid="dashboard-page">
