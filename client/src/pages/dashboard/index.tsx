@@ -73,11 +73,11 @@ export default function Dashboard() {
   const displayStats = stats || mockStats;
 
   return (
-    <div className="p-6 space-y-8" data-testid="dashboard-page">
+    <div className="p-8 space-y-8" data-testid="dashboard-page">
       {/* Welcome Section */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold" data-testid="text-dashboard-title">
+          <h1 className="text-3xl font-bold tracking-tight" data-testid="text-dashboard-title">
             Dashboard
           </h1>
           <p className="text-muted-foreground" data-testid="text-dashboard-subtitle">
@@ -85,7 +85,7 @@ export default function Dashboard() {
           </p>
         </div>
         <Link href="/dashboard/pages">
-          <Button data-testid="button-create-page">
+          <Button className="w-full sm:w-auto" data-testid="button-create-page">
             <PlusIcon className="w-4 h-4 mr-2" />
             Create Page
           </Button>
