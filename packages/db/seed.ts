@@ -55,7 +55,7 @@ async function seed() {
       id: "33333333-3333-3333-3333-333333333333", // Use proper UUID format
       userId: "22222222-2222-2222-2222-222222222222", // shop@example.com
       packageId: "pkg-pro",
-      status: "active",
+      status: "active" as const,
       currentPeriodStart: new Date(),
       currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
     };
@@ -93,20 +93,20 @@ async function seed() {
     // Insert sample analytics events
     const sampleEvents = [
       {
-        pageId: "55555555-5555-5555-5555-555555555555", // Use proper UUID format
+        pageId: "55555555-5555-5555-5555-555555555555", // Jessica's page
         eventType: "view" as const,
         metadata: { userAgent: "Mozilla/5.0", country: "ID" },
         ipAddress: "127.0.0.1",
       },
       {
-        pageId: "55555555-5555-5555-5555-555555555555", // Use proper UUID format
-        blockId: "66666666-6666-6666-6666-666666666666", // Use proper UUID format
+        pageId: "55555555-5555-5555-5555-555555555555", // Jessica's page
+        blockId: "b0000001-0001-0001-0001-000000000002", // Jessica's links block
         eventType: "click" as const,
         metadata: { linkUrl: "https://jessica.blog" },
         ipAddress: "127.0.0.1",
       },
       {
-        shortlinkId: "44444444-4444-4444-4444-444444444444", // Use proper UUID format
+        shortlinkId: "44444444-4444-4444-4444-444444444444", // Existing shortlink
         eventType: "click" as const,
         metadata: { code: "sp1" },
         ipAddress: "127.0.0.1",
