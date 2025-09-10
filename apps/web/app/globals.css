@@ -1,0 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import the main index.css */
+@import '../../../client/src/index.css';
