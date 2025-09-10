@@ -71,6 +71,11 @@ export class UserService {
   }
 
   private generateToken(user: User): string {
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET environment variable is required');
+    }
+    
     const payload = {
       userId: user.id,
       email: user.email,
@@ -78,14 +83,18 @@ export class UserService {
       plan: user.plan,
     };
 
-    return jwt.sign(payload, process.env.JWT_SECRET || 'default_secret', {
+    return jwt.sign(payload, jwtSecret, {
       expiresIn: '7d',
     });
   }
 
   verifyToken(token: string): { userId: string; email: string; role: string; plan: string } {
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET environment variable is required');
+    }
     try {
-      return jwt.verify(token, process.env.JWT_SECRET || 'default_secret') as any;
+      return jwt.verify(token, jwtSecret) as any;
     } catch (error) {
       throw new Error('Invalid token');
     }

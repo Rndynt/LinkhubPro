@@ -1,11 +1,31 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import "./types"; // Import type augmentations
+
+// Domain Services
+import { UserService } from '../domains/users/application/UserService';
+import { DrizzleUserRepository } from '../domains/users/infrastructure/DrizzleUserRepository';
+import { PageService } from '../domains/pages/application/PageService';
+import { DrizzlePageRepository } from '../domains/pages/infrastructure/DrizzlePageRepository';
+import { AnalyticsService } from '../domains/analytics/application/AnalyticsService';
+import { DrizzleAnalyticsRepository } from '../domains/analytics/infrastructure/DrizzleAnalyticsRepository';
+import { AdminService } from '../domains/admin/application/AdminService';
+import { DrizzleBillingRepository } from '../domains/billing/infrastructure/DrizzleBillingRepository';
+
+// Initialize repositories
+const userRepository = new DrizzleUserRepository();
+const pageRepository = new DrizzlePageRepository();
+const analyticsRepository = new DrizzleAnalyticsRepository();
+const billingRepository = new DrizzleBillingRepository();
+
+// Initialize services
+const userService = new UserService(userRepository);
+const pageService = new PageService(pageRepository);
+const analyticsService = new AnalyticsService(analyticsRepository);
+const adminService = new AdminService(userRepository, billingRepository, analyticsRepository);
 
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -24,8 +44,8 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
-    const user = await storage.getUser(decoded.userId);
+    const decoded = userService.verifyToken(token);
+    const user = await userService.getUserById(decoded.userId);
     if (!user) {
       return res.status(401).json({ message: 'User not found' });
     }
@@ -73,19 +93,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'All fields are required' });
       }
 
-      // Check if user exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(400).json({ message: 'User already exists' });
-      }
-
-      const existingUsername = await storage.getUserByUsername(username);
-      if (existingUsername) {
-        return res.status(400).json({ message: 'Username already taken' });
-      }
-
-      // Create user
-      const user = await storage.createUser({
+      // Register user using domain service
+      const { user, token } = await userService.register({
         email,
         username,
         name,
@@ -94,67 +103,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         plan: 'free',
       });
 
-      // Create default page with 3 blocks for free user
-      const defaultPage = await storage.createPage({
-        userId: user.id,
-        title: `${name} - Links`,
-        slug: username,
-        isPublished: true,
-      });
+      // Create default page for free users
+      if (user.plan === 'free') {
+        await pageService.createPage(user.id, {
+          userId: user.id,
+          title: `${name} - Links`,
+          slug: username,
+          description: 'Welcome to my link page!',
+        }, user.plan);
+      }
 
-      // Create default blocks
-      await storage.createBlock({
-        pageId: defaultPage.id,
-        type: 'links_block',
-        position: 1,
-        config: {
-          links: [
-            { label: 'Blog', url: 'https://jessica.blog' },
-            { label: 'Shop', url: 'https://shop.jessica' },
-            { label: 'Spotify', url: 'https://spotify.example' }
-          ]
-        }
-      });
-
-      await storage.createBlock({
-        pageId: defaultPage.id,
-        type: 'social_block',
-        position: 2,
-        config: {
-          socials: [
-            { provider: 'instagram', url: 'https://instagram.com/jessica' },
-            { provider: 'youtube', url: 'https://youtube.com/jessica' }
-          ]
-        }
-      });
-
-      await storage.createBlock({
-        pageId: defaultPage.id,
-        type: 'contact_block',
-        position: 3,
-        config: {
-          phone: '+628123456789',
-          whatsapp_prefilled: 'Halo, saya mau pesan'
-        }
-      });
-
-      // Generate JWT token
-      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+      // Remove password from response
+      const { password: _, ...userWithoutPassword } = user as any;
 
       res.status(201).json({
         token,
-        user: {
-          id: user.id,
-          email: user.email,
-          username: user.username,
-          name: user.name,
-          role: user.role,
-          plan: user.plan,
-        }
+        user: userWithoutPassword
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
-      res.status(500).json({ message: 'Internal server error' });
+      const statusCode = error.message === 'upgrade_required' ? 403 :
+                         error.message.includes('already exists') || error.message.includes('already taken') ? 409 : 500;
+      res.status(statusCode).json({ 
+        message: error.message || 'Internal server error',
+        error: error.message === 'upgrade_required' ? 'upgrade_required' : undefined
+      });
     }
   });
 
@@ -166,35 +139,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Email and password are required' });
       }
 
-      // Find user
-      const user = await storage.getUserByEmail(email);
-      if (!user || !user.password) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-      }
+      // Login using domain service
+      const { user, token } = await userService.login(email, password);
 
-      // Verify password
-      const isValid = await bcrypt.compare(password, user.password);
-      if (!isValid) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-      }
-
-      // Generate JWT token
-      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+      // Remove password from response
+      const { password: _, ...userWithoutPassword } = user as any;
 
       res.json({
         token,
-        user: {
-          id: user.id,
-          email: user.email,
-          username: user.username,
-          name: user.name,
-          role: user.role,
-          plan: user.plan,
-        }
+        user: userWithoutPassword
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
-      res.status(500).json({ message: 'Internal server error' });
+      res.status(401).json({ message: error.message || 'Invalid credentials' });
     }
   });
 
@@ -219,7 +176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.user) {
         return res.status(401).json({ message: 'User not authenticated' });
       }
-      const pages = await storage.getUserPages(req.user.id);
+      const pages = await pageService.getUserPages(req.user.id);
       res.json(pages);
     } catch (error) {
       console.error('Get pages error:', error);
@@ -233,32 +190,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'User not authenticated' });
       }
       
-      const { title, slug } = req.body;
+      const { title, slug, description } = req.body;
 
       // Validation
       if (!title || !slug) {
         return res.status(400).json({ message: 'Title and slug are required' });
       }
 
-      // Check plan limits for free users
-      if (req.user.plan === 'free') {
-        const existingPages = await storage.getUserPages(req.user.id);
-        if (existingPages.length >= 1) {
-          return res.status(403).json({ error: 'upgrade_required', message: 'Free plan allows only 1 page' });
-        }
-      }
-
-      const page = await storage.createPage({
+      const page = await pageService.createPage(req.user.id, {
         userId: req.user.id,
         title,
         slug,
-        isPublished: false,
-      });
+        description,
+      }, req.user.plan);
 
       res.status(201).json(page);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Create page error:', error);
-      res.status(500).json({ message: 'Internal server error' });
+      const statusCode = error.message === 'upgrade_required' ? 403 :
+                         error.message.includes('Slug already exists') ? 409 : 500;
+      res.status(statusCode).json({ 
+        error: error.message === 'upgrade_required' ? 'upgrade_required' : undefined,
+        message: error.message || 'Internal server error'
+      });
     }
   });
 
@@ -267,12 +221,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.user) {
         return res.status(401).json({ message: 'User not authenticated' });
       }
-      const page = await storage.getPageById(req.params.id);
+      const page = await pageService.getPageById(req.params.id);
       if (!page || page.userId !== req.user.id) {
         return res.status(404).json({ message: 'Page not found' });
       }
 
-      const blocks = await storage.getPageBlocks(page.id);
+      const blocks = await pageService.getPageBlocks(page.id);
       res.json({ ...page, blocks });
     } catch (error) {
       console.error('Get page error:', error);
@@ -286,13 +240,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'User not authenticated' });
       }
       const { title, description, isPublished } = req.body;
-      const page = await storage.getPageById(req.params.id);
+      const page = await pageService.getPageById(req.params.id);
       
       if (!page || page.userId !== req.user.id) {
         return res.status(404).json({ message: 'Page not found' });
       }
 
-      const updatedPage = await storage.updatePage(req.params.id, {
+      const updatedPage = await pageService.updatePage(req.params.id, {
         title,
         description,
         isPublished,
@@ -312,56 +266,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'User not authenticated' });
       }
       const { type, position, config } = req.body;
-      const page = await storage.getPageById(req.params.pageId);
+      const page = await pageService.getPageById(req.params.pageId);
       
       if (!page || page.userId !== req.user.id) {
         return res.status(404).json({ message: 'Page not found' });
       }
 
-      // Check if block type requires Pro plan
-      const proBlocks = ['product_card', 'dynamic_feed'];
-      if (proBlocks.includes(type) && req.user.plan === 'free') {
-        return res.status(403).json({ error: 'upgrade_required', message: 'This block requires Pro plan' });
-      }
-
-      const block = await storage.createBlock({
+      const block = await pageService.createBlock(req.params.pageId, {
         pageId: req.params.pageId,
         type,
         position,
         config,
-      });
+      }, req.user.plan);
 
       res.status(201).json(block);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Create block error:', error);
-      res.status(500).json({ message: 'Internal server error' });
+      const statusCode = error.message === 'upgrade_required' ? 403 : 500;
+      res.status(statusCode).json({
+        error: error.message === 'upgrade_required' ? 'upgrade_required' : undefined, 
+        message: error.message || 'Internal server error'
+      });
     }
   });
 
   // Shortlink redirect
   app.get('/s/:code', async (req, res) => {
     try {
-      const shortlink = await storage.getShortlinkByCode(req.params.code);
-      if (!shortlink || !shortlink.isActive) {
+      const targetUrl = await analyticsService.redirectShortlink(req.params.code);
+      res.redirect(302, targetUrl);
+    } catch (error: any) {
+      console.error('Shortlink redirect error:', error);
+      if (error.message === 'Shortlink not found') {
         return res.status(404).json({ message: 'Shortlink not found' });
       }
-
-      // Increment clicks atomically
-      await storage.incrementShortlinkClicks(shortlink.id);
-
-      // Create analytics event
-      await storage.createAnalyticsEvent({
-        shortlinkId: shortlink.id,
-        eventType: 'click',
-        userAgent: req.headers['user-agent'],
-        ipAddress: req.ip,
-        referrer: req.headers.referer,
-      });
-
-      // Redirect
-      res.redirect(302, shortlink.targetUrl);
-    } catch (error) {
-      console.error('Shortlink redirect error:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   });
@@ -369,17 +307,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public page view
   app.get('/api/page/:slug', async (req, res) => {
     try {
-      const page = await storage.getPageBySlug(req.params.slug);
-      if (!page || !page.isPublished) {
+      const result = await pageService.getPageBySlug(req.params.slug);
+      if (!result || !result.page.isPublished) {
         return res.status(404).json({ message: 'Page not found' });
       }
 
-      const blocks = await storage.getPageBlocks(page.id);
+      const { page, blocks } = result;
       
       // Create view analytics event
-      await storage.createAnalyticsEvent({
-        pageId: page.id,
-        eventType: 'view',
+      await analyticsService.trackPageView(page.id, {
         userAgent: req.headers['user-agent'],
         ipAddress: req.ip,
         referrer: req.headers.referer,
@@ -397,15 +333,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { pageId, blockId, eventType, metadata } = req.body;
       
-      await storage.createAnalyticsEvent({
-        pageId,
-        blockId,
-        eventType,
-        userAgent: req.headers['user-agent'],
-        ipAddress: req.ip,
-        referrer: req.headers.referer,
-        metadata,
-      });
+      if (eventType === 'click') {
+        await analyticsService.trackLinkClick(pageId, blockId, {
+          ...metadata,
+          userAgent: req.headers['user-agent'],
+          ipAddress: req.ip,
+          referrer: req.headers.referer,
+        });
+      } else if (eventType === 'view') {
+        await analyticsService.trackPageView(pageId, {
+          ...metadata,
+          userAgent: req.headers['user-agent'],
+          ipAddress: req.ip,
+          referrer: req.headers.referer,
+        });
+      } else {
+        await analyticsService.trackEvent({
+          pageId,
+          blockId,
+          type: eventType,
+          metadata: {
+            ...metadata,
+            userAgent: req.headers['user-agent'],
+            ipAddress: req.ip,
+            referrer: req.headers.referer,
+          },
+        });
+      }
 
       res.status(201).json({ success: true });
     } catch (error) {
@@ -422,13 +376,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const { selectedPage, timeRange } = req.query;
-      const pageId = selectedPage === 'all' ? undefined : selectedPage as string;
+      const days = timeRange === '30d' ? 30 : timeRange === '90d' ? 90 : 7;
       
-      const analytics = await storage.getUserAnalytics(
-        req.user.id, 
-        pageId, 
-        timeRange as string
-      );
+      const analytics = await analyticsService.getUserAnalytics(req.user.id, days);
       
       res.json(analytics);
     } catch (error) {
@@ -444,7 +394,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'User not authenticated' });
       }
       
-      const stats = await storage.getUserDashboardStats(req.user.id);
+      const analytics = await analyticsService.getUserAnalytics(req.user.id, 7);
+      const pages = await pageService.getUserPages(req.user.id);
+      
+      const stats = {
+        totalViews: analytics.totalViews,
+        totalClicks: analytics.totalClicks,
+        activePages: pages.length,
+        conversionRate: analytics.conversionRate,
+        viewsChange: 0, // Would need historical comparison
+        clicksChange: 0, // Would need historical comparison
+      };
+      
       res.json(stats);
     } catch (error) {
       console.error('Get dashboard stats error:', error);
@@ -459,16 +420,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'User not authenticated' });
       }
       
-      const stats = await storage.getAdminStats();
+      const stats = await adminService.getAdminStats();
       
-      // Log admin action
-      await storage.createAdminAuditLog({
-        adminId: req.user.id,
-        action: 'view_admin_stats',
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-      });
-
       res.json(stats);
     } catch (error) {
       console.error('Get admin stats error:', error);
@@ -482,16 +435,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'User not authenticated' });
       }
       const { limit = 50, offset = 0 } = req.query;
-      const result = await storage.getAllUsers(Number(limit), Number(offset));
+      const result = await adminService.getAllUsers(Number(offset), Number(limit));
       
-      // Log admin action
-      await storage.createAdminAuditLog({
-        adminId: req.user.id,
-        action: 'view_users',
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-      });
-
       res.json(result);
     } catch (error) {
       console.error('Get admin users error:', error);
