@@ -11,6 +11,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/components/ThemeProvider";
 import { Link, useLocation } from "wouter";
 import { 
   BellIcon, 
@@ -18,11 +19,15 @@ import {
   SettingsIcon, 
   LogOutIcon,
   UserIcon,
-  CrownIcon
+  CrownIcon,
+  SunIcon,
+  MoonIcon,
+  LaptopIcon
 } from "lucide-react";
 
 export default function Header() {
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [location] = useLocation();
 
   // Route-aware header configuration
@@ -60,6 +65,27 @@ export default function Header() {
       .slice(0, 2);
   };
 
+  const getThemeIcon = () => {
+    switch (theme) {
+      case "light":
+        return <SunIcon className="w-4 h-4" />;
+      case "dark":
+        return <MoonIcon className="w-4 h-4" />;
+      default:
+        return <LaptopIcon className="w-4 h-4" />;
+    }
+  };
+
+  const cycleTheme = () => {
+    if (theme === "light") {
+      setTheme("dark");
+    } else if (theme === "dark") {
+      setTheme("system");
+    } else {
+      setTheme("light");
+    }
+  };
+
   return (
     <header className="border-b border-border bg-card px-4 sm:px-6 py-3 sm:py-4" data-testid="header">
       <div className="flex items-center justify-between min-w-0">
@@ -92,6 +118,17 @@ export default function Header() {
               </Button>
             </>
           )}
+
+          {/* Theme Toggle */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={cycleTheme}
+            title={`Current theme: ${theme}`}
+            data-testid="button-theme-toggle"
+          >
+            {getThemeIcon()}
+          </Button>
 
           {/* Notifications - Hidden on small screens */}
           <Button variant="ghost" size="icon" className="hidden sm:flex" data-testid="button-notifications">
