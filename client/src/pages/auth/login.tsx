@@ -76,17 +76,17 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-background">
       {/* Left side - Form */}
       <div className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <Link href="/">
-              <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 hover-elevate cursor-pointer">
+              <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 hover:bg-primary/90 transition-colors cursor-pointer">
                 <span className="text-primary-foreground font-bold text-2xl">L</span>
               </div>
             </Link>
-            <h2 className="text-3xl font-bold">Welcome back</h2>
+            <h2 className="text-3xl font-bold tracking-tight">Welcome back</h2>
             <p className="text-muted-foreground mt-2">Sign in to your Linkhub Pro account</p>
           </div>
 
