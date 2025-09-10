@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import * as schema from "./schema";
+import * as schema from "../../shared/schema";
 import starterData from "./seeds/starter.json";
 import bcrypt from "bcrypt";
 
@@ -29,8 +29,13 @@ async function seed() {
 
     console.log("✅ Cleared existing data");
 
-    // Insert packages
-    await db.insert(schema.packages).values(starterData.packages);
+    // Insert packages (transform snake_case to camelCase)
+    const packagesData = starterData.packages.map(pkg => ({
+      ...pkg,
+      priceCents: pkg.price_cents,
+      billingInterval: pkg.billing_interval as "monthly" | "yearly",
+    }));
+    await db.insert(schema.packages).values(packagesData);
     console.log("✅ Inserted packages");
 
     // Insert users with hashed passwords
@@ -38,6 +43,8 @@ async function seed() {
       starterData.users.map(async (user) => ({
         ...user,
         password: await bcrypt.hash("password123", 10), // Default password for all test users
+        role: user.role as "admin" | "tenant",
+        plan: user.plan as "admin" | "free" | "pro",
       }))
     );
     await db.insert(schema.users).values(usersWithHashedPasswords);
@@ -45,7 +52,7 @@ async function seed() {
 
     // Insert subscriptions (for pro user)
     const proSubscription = {
-      id: "sub-1",
+      id: "33333333-3333-3333-3333-333333333333", // Use proper UUID format
       userId: "22222222-2222-2222-2222-222222222222", // shop@example.com
       packageId: "pkg-pro",
       status: "active",
@@ -55,36 +62,52 @@ async function seed() {
     await db.insert(schema.subscriptions).values([proSubscription]);
     console.log("✅ Inserted subscriptions");
 
-    // Insert pages
-    await db.insert(schema.pages).values(starterData.pages);
+    // Insert pages (transform snake_case to camelCase)
+    const pagesData = starterData.pages.map(page => ({
+      ...page,
+      userId: page.user_id,
+      isPublished: page.is_published,
+    }));
+    await db.insert(schema.pages).values(pagesData);
     console.log("✅ Inserted pages");
 
-    // Insert blocks
-    await db.insert(schema.blocks).values(starterData.blocks);
+    // Insert blocks (transform snake_case to camelCase)
+    const blocksData = starterData.blocks.map(block => ({
+      ...block,
+      pageId: block.page_id,
+      type: block.type, // No enum restriction in shared schema
+    }));
+    await db.insert(schema.blocks).values(blocksData);
     console.log("✅ Inserted blocks");
 
-    // Insert shortlinks
-    await db.insert(schema.shortlinks).values(starterData.shortlinks);
+    // Insert shortlinks (transform snake_case to camelCase)
+    const shortlinksData = starterData.shortlinks.map(link => ({
+      ...link,
+      targetUrl: link.target_url,
+      pageId: link.page_id,
+      blockId: link.block_id,
+    }));
+    await db.insert(schema.shortlinks).values(shortlinksData);
     console.log("✅ Inserted shortlinks");
 
     // Insert sample analytics events
     const sampleEvents = [
       {
-        pageId: "page-1",
-        type: "view" as const,
+        pageId: "55555555-5555-5555-5555-555555555555", // Use proper UUID format
+        eventType: "view" as const,
         metadata: { userAgent: "Mozilla/5.0", country: "ID" },
         ipAddress: "127.0.0.1",
       },
       {
-        pageId: "page-1",
-        blockId: "blk-1",
-        type: "click" as const,
+        pageId: "55555555-5555-5555-5555-555555555555", // Use proper UUID format
+        blockId: "66666666-6666-6666-6666-666666666666", // Use proper UUID format
+        eventType: "click" as const,
         metadata: { linkUrl: "https://jessica.blog" },
         ipAddress: "127.0.0.1",
       },
       {
-        shortlinkId: "s1",
-        type: "click" as const,
+        shortlinkId: "44444444-4444-4444-4444-444444444444", // Use proper UUID format
+        eventType: "click" as const,
         metadata: { code: "sp1" },
         ipAddress: "127.0.0.1",
       },
@@ -100,8 +123,6 @@ async function seed() {
 }
 
 // Run seed if called directly
-if (require.main === module) {
-  seed();
-}
+seed();
 
 export default seed;
