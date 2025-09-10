@@ -73,27 +73,19 @@ export default function Dashboard() {
   const displayStats = stats || mockStats;
 
   return (
-    <div className="p-8 space-y-8" data-testid="dashboard-page">
-      {/* Welcome Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight" data-testid="text-dashboard-title">
-            Dashboard
-          </h1>
-          <p className="text-muted-foreground" data-testid="text-dashboard-subtitle">
-            Welcome back, {user?.name}! Here's your overview.
-          </p>
-        </div>
-        <Link href="/dashboard/pages">
-          <Button className="w-full sm:w-auto" data-testid="button-create-page">
-            <PlusIcon className="w-4 h-4 mr-2" />
-            Create Page
-          </Button>
-        </Link>
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8" data-testid="dashboard-page">
+      {/* Welcome Section - Remove duplicate Create Page button since it's now in Header */}
+      <div className="flex flex-col space-y-2">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" data-testid="text-dashboard-title">
+          Dashboard Overview
+        </h1>
+        <p className="text-sm sm:text-base text-muted-foreground" data-testid="text-dashboard-subtitle">
+          Welcome back, {user?.name}! Here's your performance overview.
+        </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <Card data-testid="stats-card-views">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Views</CardTitle>
@@ -162,36 +154,34 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Your Pages */}
         <Card data-testid="card-your-pages">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Your Pages</CardTitle>
-            <Link href="/dashboard/pages">
-              <Button variant="ghost" size="sm" data-testid="button-view-all-pages">
-                View all
-              </Button>
-            </Link>
+            <Button asChild variant="ghost" size="sm" data-testid="button-view-all-pages">
+              <Link href="/dashboard/pages">View all</Link>
+            </Button>
           </CardHeader>
           <CardContent className="space-y-4">
             {pages && pages.length > 0 ? (
               pages.slice(0, 3).map((page) => (
                 <div
                   key={page.id}
-                  className="flex items-center justify-between p-4 bg-muted/30 rounded-lg"
+                  className="flex items-center justify-between p-3 sm:p-4 bg-card border border-border rounded-lg hover:bg-accent/50 transition-colors"
                   data-testid={`page-item-${page.id}`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                      <span className="text-primary-foreground font-semibold text-sm">
+                  <div className="flex items-center space-x-3 min-w-0 flex-1">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+                      <span className="text-primary-foreground font-semibold text-xs sm:text-sm">
                         {page.title.charAt(0)}
                       </span>
                     </div>
-                    <div>
-                      <h4 className="font-medium" data-testid={`text-page-title-${page.id}`}>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-medium text-foreground truncate" data-testid={`text-page-title-${page.id}`}>
                         {page.title}
                       </h4>
-                      <p className="text-sm text-muted-foreground" data-testid={`text-page-slug-${page.id}`}>
+                      <p className="text-xs sm:text-sm text-foreground/70 truncate" data-testid={`text-page-slug-${page.id}`}>
                         linkhub.pro/{page.slug}
                       </p>
                     </div>
@@ -203,11 +193,11 @@ export default function Dashboard() {
                     >
                       {page.isPublished ? "Published" : "Draft"}
                     </Badge>
-                    <Link href={`/dashboard/pages/${page.id}/editor`}>
-                      <Button variant="ghost" size="sm" data-testid={`button-edit-page-${page.id}`}>
+                    <Button asChild variant="ghost" size="sm" data-testid={`button-edit-page-${page.id}`}>
+                      <Link href={`/dashboard/pages/${page.id}/editor`}>
                         <ExternalLinkIcon className="w-4 h-4" />
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                   </div>
                 </div>
               ))
@@ -215,9 +205,9 @@ export default function Dashboard() {
               <div className="text-center py-8">
                 <FileTextIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground mb-4">No pages created yet</p>
-                <Link href="/dashboard/pages">
-                  <Button data-testid="button-create-first-page">Create Your First Page</Button>
-                </Link>
+                <Button asChild data-testid="button-create-first-page">
+                  <Link href="/dashboard/pages">Create Your First Page</Link>
+                </Button>
               </div>
             )}
 
@@ -228,12 +218,12 @@ export default function Dashboard() {
                 <p className="text-sm text-muted-foreground mb-3">
                   Upgrade to Pro for unlimited pages and advanced features.
                 </p>
-                <Link href="/dashboard/billing">
-                  <Button data-testid="button-upgrade-to-pro">
+                <Button asChild data-testid="button-upgrade-to-pro">
+                  <Link href="/dashboard/billing">
                     <CrownIcon className="w-4 h-4 mr-2" />
                     Upgrade to Pro
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             )}
           </CardContent>
@@ -243,11 +233,9 @@ export default function Dashboard() {
         <Card data-testid="card-analytics-preview">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Analytics Overview</CardTitle>
-            <Link href="/dashboard/analytics">
-              <Button variant="ghost" size="sm" data-testid="button-view-analytics">
-                View details
-              </Button>
-            </Link>
+            <Button asChild variant="ghost" size="sm" data-testid="button-view-analytics">
+              <Link href="/dashboard/analytics">View details</Link>
+            </Button>
           </CardHeader>
           <CardContent>
             <div className="h-64 bg-muted/30 rounded-lg flex items-center justify-center mb-4">

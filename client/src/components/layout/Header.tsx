@@ -11,7 +11,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { 
   BellIcon, 
   PlusIcon, 
@@ -23,6 +23,28 @@ import {
 
 export default function Header() {
   const { user } = useAuth();
+  const [location] = useLocation();
+
+  // Route-aware header configuration
+  const getHeaderConfig = (path: string) => {
+    if (path === "/" || path === "/dashboard") {
+      return { title: "Dashboard", subtitle: `Welcome back, ${user?.name || 'User'}!`, showCreatePage: true };
+    } else if (path.startsWith("/dashboard/pages")) {
+      return { title: "Pages", subtitle: "Manage your link pages", showCreatePage: true };
+    } else if (path.startsWith("/dashboard/analytics")) {
+      return { title: "Analytics", subtitle: "View your performance metrics", showCreatePage: false };
+    } else if (path.startsWith("/dashboard/billing")) {
+      return { title: "Billing", subtitle: "Manage your subscription", showCreatePage: false };
+    } else if (path.startsWith("/dashboard/domains")) {
+      return { title: "Domains", subtitle: "Manage custom domains", showCreatePage: false };
+    } else if (path.startsWith("/dashboard/admin")) {
+      return { title: "Admin", subtitle: "System administration", showCreatePage: false };
+    } else {
+      return { title: "Dashboard", subtitle: `Welcome back, ${user?.name || 'User'}!`, showCreatePage: false };
+    }
+  };
+
+  const headerConfig = getHeaderConfig(location);
 
   const handleLogout = () => {
     window.location.href = "/api/auth/logout";
@@ -39,41 +61,50 @@ export default function Header() {
   };
 
   return (
-    <header className="border-b border-border bg-card px-6 py-4" data-testid="header">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+    <header className="border-b border-border bg-card px-4 sm:px-6 py-3 sm:py-4" data-testid="header">
+      <div className="flex items-center justify-between min-w-0">
+        <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
           <SidebarTrigger data-testid="button-sidebar-toggle" />
-          <div>
-            <h1 className="text-xl font-semibold" data-testid="text-page-title">
-              Dashboard
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg sm:text-xl font-semibold truncate" data-testid="text-page-title">
+              {headerConfig.title}
             </h1>
-            <p className="text-sm text-muted-foreground" data-testid="text-welcome">
-              Welcome back, {user?.name || 'User'}!
+            <p className="text-xs sm:text-sm text-muted-foreground truncate hidden sm:block" data-testid="text-welcome">
+              {headerConfig.subtitle}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-4">
-          {/* Create Button */}
-          <Link href="/dashboard/pages">
-            <Button data-testid="button-create-page">
-              <PlusIcon className="w-4 h-4 mr-2" />
-              Create Page
-            </Button>
-          </Link>
+        <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+          {/* Conditional Create Button - Only on relevant pages, exclude editor routes */}
+          {headerConfig.showCreatePage && !location.includes('/editor') && (
+            <>
+              <Button asChild className="hidden sm:flex" data-testid="button-create-page">
+                <Link href="/dashboard/pages">
+                  <PlusIcon className="w-4 h-4 mr-2" />
+                  Create Page
+                </Link>
+              </Button>
+              <Button asChild size="icon" className="sm:hidden" data-testid="button-create-page-mobile">
+                <Link href="/dashboard/pages">
+                  <PlusIcon className="w-4 h-4" />
+                </Link>
+              </Button>
+            </>
+          )}
 
-          {/* Notifications */}
-          <Button variant="ghost" size="icon" data-testid="button-notifications">
+          {/* Notifications - Hidden on small screens */}
+          <Button variant="ghost" size="icon" className="hidden sm:flex" data-testid="button-notifications">
             <BellIcon className="w-5 h-5" />
           </Button>
 
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full" data-testid="button-user-menu">
-                <Avatar className="h-10 w-10">
+              <Button variant="ghost" className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full" data-testid="button-user-menu">
+                <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                   <AvatarImage src={user?.profileImageUrl || undefined} alt={user?.name || "User"} />
-                  <AvatarFallback className="bg-primary text-primary-foreground">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs sm:text-sm">
                     {getUserInitials(user?.name)}
                   </AvatarFallback>
                 </Avatar>
@@ -101,6 +132,14 @@ export default function Header() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              {/* Mobile-only Notifications in menu */}
+              <div className="sm:hidden">
+                <DropdownMenuItem data-testid="menu-item-notifications">
+                  <BellIcon className="mr-2 h-4 w-4" />
+                  <span>Notifications</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </div>
               <Link href="/dashboard/profile">
                 <DropdownMenuItem data-testid="menu-item-profile">
                   <UserIcon className="mr-2 h-4 w-4" />

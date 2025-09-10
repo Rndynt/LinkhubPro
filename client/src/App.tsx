@@ -28,13 +28,13 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   } as React.CSSProperties;
 
   return (
-    <SidebarProvider style={style}>
-      <div className="flex h-screen w-full bg-background">
+    <SidebarProvider defaultOpen={false} style={style}>
+      <div className="flex h-screen w-full bg-background overflow-hidden">
         <Sidebar />
-        <div className="flex flex-col flex-1 bg-background">
+        <div className="flex flex-col flex-1 min-w-0 bg-background">
           <Header />
-          <main className="flex-1 overflow-y-auto bg-muted/50">
-            <div className="container mx-auto max-w-7xl">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-muted/50">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 min-w-0">
               {children}
             </div>
           </main>
