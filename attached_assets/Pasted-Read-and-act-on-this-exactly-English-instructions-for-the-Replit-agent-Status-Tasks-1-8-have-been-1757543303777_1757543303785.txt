@@ -1,0 +1,72 @@
+Read and act on this exactly — English instructions for the Replit agent
+Status: Tasks 1–8 have been executed and are complete. Confirmed fixes for items 1–8 are applied in the branch/commit used by the team. Task #9 (Demo pages for landing) has not been fully executed and must be continued and completed (details below).
+Required work (continue and finish task #9; verify completed work for 1–8)
+Tasks already completed (1–8)
+State in your final report that the following items are already implemented and finished (include commits/PR references and file paths in the report):
+Landing page — Pricing section: replaced harsh border-lines with elevation (box-shadow), corrected padding and spacing, ensured neat backgrounds.
+Analytics — Top Performing Pages / Links: fixed mobile responsiveness and prevented overflow.
+Admin Panel — User Management / Recent Subscriptions / Quick Actions: fixed mobile responsiveness and layout.
+Endpoint Monitor — Endpoint Status items: fixed wrapping/stacking and responsiveness.
+Sidebar — Fixed active-link bug so only the correct menu item becomes active.
+Admin menus — Added/exposed/manageable admin menus where needed; validated access controls.
+Pages menu — Fixed create-page error end-to-end (frontend validation, API, backend handler, DB write, error handling).
+Removed hardcoded/dummy data where found; replaced with real DB-driven data flows (dashboard metrics, analytics, pages, domains, etc.).
+You must include in the report: which files changed, concise explanation why each change fixed the issue, and exact commit/PR IDs or branch names.
+Task 9 — NOT FINISHED (continue and complete now)
+Finish building, persisting, seeding, and wiring the demo pages used by the landing page “Visit Demo” flow. Deliverables and exact steps to finish:
+Demo pages UI
+Build attractive demo pages (link blocks, CTA, grid/list, content blocks) that showcase product features.
+Use the existing design system (Tailwind + shadcn/ui). Ensure mobile-first / desktop responsiveness.
+Persist demo data
+All demo content must be persisted in the database (not front-end only).
+Create database seeders that insert demo pages, demo links, blocks, and any related metadata.
+Seeders must be idempotent and re-create demo data after database reset/migrations.
+Wire the landing page
+Wire the landing page “Visit Demo” button/link to open the seeded demo page with working link/block features.
+Ensure the demo pages behave exactly like real pages (analytics, link clicks, blocks, etc.) and reflect DB state.
+Seeder & migration details
+Add seed files (e.g., prisma/seed.ts, db/seeders/demoPagesSeeder.ts, or follow the project’s seeding convention) and document exact commands to run seeds (e.g., pnpm prisma db seed, node ./scripts/seed.js).
+Provide the full path to the seed files and include sample seed data in the repo.
+Testing & verification
+Provide smoke test steps to verify the demo page loads, demo links work, and seeded data persists after a DB reset.
+Include the list of API endpoints or UI flows used to verify correctness.
+Status report for Task #9
+Provide a short status of what parts of task #9 have already been implemented, what remains, and the exact next steps (file paths, seed files, DB commands).
+If any blockers exist (permissions, missing env vars, secrets), list them precisely with remediation steps.
+Please read and act on this DDD audit & migration exactly:
+Are all functions and features implemented using Domain-Driven Design (DDD)? Is storage.ts still in use? I believe this project should follow DDD across all features.
+I see storage.ts still contains functions that are not DDD-compliant and even performs direct database queries. That must be corrected.
+What I want you to do:
+Full audit
+Audit the entire codebase and confirm which features are already implemented using DDD and which are not.
+Check whether storage.ts is still used. If it’s used, identify every call site and list which functions perform direct DB queries or bypass the DDD structure.
+Migration into DDD
+Migrate all remaining non-DDD logic (including any direct DB queries or imperative utilities in storage.ts) into the existing DDD structure.
+Move logic into the appropriate domains/* folders (domain services, repositories, entities, value objects, use-cases/application services) as required.
+Create or update repository interfaces and implementations so database access is encapsulated inside repositories (not scattered in utility files).
+Keep the public function/behavior unchanged — only refactor structure. The runtime behavior and API must remain the same after migration.
+Pre-change analysis & plan
+Before making changes, perform a deep analysis and produce a short migration plan showing:
+Which files/functions will move and where (source → destination).
+Any new files or interfaces you will add.
+How you will ensure no behavior changes (tests, manual checks, or smoke tests).
+Post-migration
+After migrating, remove or deprecate storage.ts if it is no longer needed; otherwise, clearly document why it must remain and what its responsibilities are.
+Ensure the repository structure supports DDD and is readable/maintainable: domains contain business logic, adapters/repositories handle persistence, and UI/controllers call application services/use-cases.
+Provide a concise report of what you changed, why, and where (file paths and commit/PR references if available).
+Constraints
+Do the audit and migration carefully and only restructure — do not change business logic or alter APIs.
+Final deliverable (must be provided)
+A short, clear report confirming tasks 1–8 are complete (with commit/PR refs).
+A status report for task #9 showing what’s done, what remains, and the precise next steps to finish it.
+A DDD audit & migration report that includes:
+Migration plan (source → destination list).
+Which functions/call-sites of storage.ts were moved or deprecated.
+New/updated repository interfaces and where they live.
+Confirmation that runtime behavior and API did not change (include tests or smoke-test steps).
+Commit/PR references (or branch names) for each change.
+After completing #9, update the report to show all work done and include:
+Seed files and commands (paths and exact commands).
+Smoke test instructions to verify seeded demo pages and other fixes.
+Any remaining blockers or environment requirements.
+Act on this exactly and return the requested reports, file paths, and commit/PR references.

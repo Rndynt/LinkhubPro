@@ -51,7 +51,7 @@ interface AdminSubscription {
 }
 
 export default function AdminPanel() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [userFilter, setUserFilter] = useState("all");
 
@@ -107,7 +107,18 @@ export default function AdminPanel() {
     });
   };
 
-  // Redirect if not admin
+  // Show loading state while authentication is being checked
+  if (authLoading) {
+    return (
+      <div className="p-4 sm:p-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not admin (only after auth loading is complete)
   if (user?.role !== 'admin') {
     return (
       <div className="p-4 sm:p-6">
