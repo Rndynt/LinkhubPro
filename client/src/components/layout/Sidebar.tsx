@@ -22,6 +22,7 @@ import {
   GlobeIcon,
   SettingsIcon,
   ShieldCheckIcon,
+  ServerIcon,
   CrownIcon,
   ExternalLinkIcon,
 } from "lucide-react";
@@ -71,6 +72,12 @@ const adminItems = [
     url: "/dashboard/admin",
     icon: ShieldCheckIcon,
     testId: "nav-admin",
+  },
+  {
+    title: "Endpoint Monitor",
+    url: "/dashboard/admin/endpoints",
+    icon: ServerIcon,
+    testId: "nav-endpoints",
   },
 ];
 

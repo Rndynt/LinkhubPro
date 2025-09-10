@@ -15,6 +15,7 @@ import Billing from "@/pages/dashboard/billing";
 import Analytics from "@/pages/dashboard/analytics";
 import Domains from "@/pages/dashboard/domains";
 import AdminPanel from "@/pages/dashboard/admin/index";
+import EndpointsMonitor from "@/pages/dashboard/admin/endpoints";
 import PublicPage from "@/pages/public/[slug]";
 import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/layout/Header";
@@ -116,6 +117,13 @@ function Router() {
             {() => (
               <AuthenticatedLayout>
                 <AdminPanel />
+              </AuthenticatedLayout>
+            )}
+          </Route>
+          <Route path="/dashboard/admin/endpoints">
+            {() => (
+              <AuthenticatedLayout>
+                <EndpointsMonitor />
               </AuthenticatedLayout>
             )}
           </Route>
