@@ -81,16 +81,16 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
+  background: var(--muted);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground));
+  background: var(--muted-foreground);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--foreground));
+  background: var(--foreground);
 }
 
 /* Sidebar transition */
@@ -129,7 +129,7 @@ input:focus,
 textarea:focus,
 .select-trigger:focus {
   outline: none !important;
-  box-shadow: 0 0 0 2px hsl(var(--ring)) !important;
+  box-shadow: 0 0 0 2px var(--ring) !important;
 }
 
 /* Remove default browser shadows and outlines */
@@ -150,7 +150,7 @@ input, select, textarea, button {
 
 /* Ensure consistent focus states without shadows */
 .focus\:ring-2:focus {
-  box-shadow: 0 0 0 2px hsl(var(--ring)) !important;
+  box-shadow: 0 0 0 2px var(--ring) !important;
 }
 
 .btn-outline {
