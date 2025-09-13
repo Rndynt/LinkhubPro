@@ -93,12 +93,21 @@ export class AnalyticsService {
     return result;
   }
 
-  private groupEventsByDate(events: any[]): Record<string, number> {
-    const grouped: Record<string, number> = {};
-    events.forEach(event => {
+  /**
+   * Group analytics events by date and count views and clicks separately.
+   */
+  private groupEventsByDate(
+    events: any[],
+  ): Record<string, { views: number; clicks: number }> {
+    const grouped: Record<string, { views: number; clicks: number }> = {};
+    for (const event of events) {
       const date = event.createdAt.toISOString().split('T')[0];
-      grouped[date] = (grouped[date] || 0) + 1;
-    });
+      if (!grouped[date]) {
+        grouped[date] = { views: 0, clicks: 0 };
+      }
+      if (event.type === 'view') grouped[date].views++;
+      if (event.type === 'click') grouped[date].clicks++;
+    }
     return grouped;
   }
 }
