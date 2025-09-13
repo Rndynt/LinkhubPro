@@ -116,4 +116,4 @@ Setelah setup selesai, test login dengan:
 - **User**: `user@example.com` / `password123`
 - **Shop**: `shop@example.com` / `password123`
 
-Dashboard akan accessible di: `/dashboard`
+Dashboard dapat diakses di `/dashboard`.
